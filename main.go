@@ -17,6 +17,9 @@ limitations under the License.
 package main
 
 import (
+	"log"
+	"os"
+
 	appcatv1 "github.com/vshn/appcat-apiserver/apis/appcat/v1"
 	"github.com/vshn/appcat-apiserver/apiserver/appcat"
 	"github.com/vshn/appcat-apiserver/apiserver/vshn/postgres"
@@ -24,16 +27,38 @@ import (
 	"sigs.k8s.io/apiserver-runtime/pkg/builder"
 )
 
+var ()
+
 func main() {
-	err := builder.APIServer.
-		// +kubebuilder:scaffold:resource-register
-		WithResourceAndHandler(&appcatv1.AppCat{}, appcat.New()).
-		WithResourceAndHandler(&appcatv1.VSHNPostgresBackup{}, postgres.New()).
-		WithoutEtcd().
+
+	var appcatEnabled bool
+	var vshnEnabled bool
+
+	if os.Getenv("APPCAT_ENABLED") == "1" {
+		appcatEnabled = true
+	}
+	if os.Getenv("VSHN_ENABLED") == "1" {
+		vshnEnabled = true
+	}
+	builder := builder.APIServer
+	builder.WithoutEtcd().
 		ExposeLoopbackAuthorizer().
-		ExposeLoopbackMasterClientConfig().
-		Execute()
+		ExposeLoopbackMasterClientConfig()
+
+	if appcatEnabled {
+		builder.WithResourceAndHandler(&appcatv1.AppCat{}, appcat.New())
+	}
+
+	if vshnEnabled {
+		builder.WithResourceAndHandler(&appcatv1.VSHNPostgresBackup{}, postgres.New())
+	}
+
+	cmd, err := builder.Build()
 	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := cmd.Execute(); err != nil {
 		klog.Fatal(err)
 	}
 }

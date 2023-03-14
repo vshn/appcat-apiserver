@@ -1,0 +1,9 @@
+# this file assumes state of cluster after someone did `make local-install`
+# I want to start fresh to eliminate some issues
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+- command: kubectl delete -f base_deployment.yaml
+  namespaced: true
+apply:
+- base_deployment.yaml

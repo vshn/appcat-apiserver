@@ -1,0 +1,25 @@
+# assert all resources are available in apiserver
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+timeout: 120
+---
+apiVersion: api.appcat.vshn.io/v1
+kind: AppCat
+metadata:
+  name: cloudscale.objectbuckets.appcat.vshn.io
+status:
+  compositionName: cloudscale.objectbuckets.appcat.vshn.io
+---
+apiVersion: api.appcat.vshn.io/v1
+kind: AppCat
+metadata:
+  name: exoscalepostgres.exoscale.appcat.vshn.io
+status:
+  compositionName: exoscalepostgres.exoscale.appcat.vshn.io
+---
+apiVersion: api.appcat.vshn.io/v1
+kind: AppCat
+metadata:
+  name: vshnpostgres.vshn.appcat.vshn.io
+status:
+  compositionName: vshnpostgres.vshn.appcat.vshn.io

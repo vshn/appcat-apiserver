@@ -34,8 +34,10 @@ spec:
             - "--audit-log-maxage=0"
             - "--audit-log-maxbackup=0"
           env:
-            - name: APPCAT_ENABLED
+            - name: "APPCAT_ENABLED"
               value: "1"
+            - name: "VSHN_ENABLED"
+              value: "0"
           resources:
             requests:
               cpu: 100m
@@ -48,3 +50,10 @@ spec:
         - name: apiserver-certs
           secret:
             secretName: appcat
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+delete:
+# Delete all Pods in the test namespace, there is only 1, so not a tragedy ;p
+- apiVersion: v1
+  kind: Pod

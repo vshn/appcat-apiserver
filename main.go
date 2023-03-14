@@ -17,41 +17,41 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
 	appcatv1 "github.com/vshn/appcat-apiserver/apis/appcat/v1"
 	"github.com/vshn/appcat-apiserver/apiserver/appcat"
-	"github.com/vshn/appcat-apiserver/apiserver/vshn/postgres"
 	"k8s.io/klog"
 	"sigs.k8s.io/apiserver-runtime/pkg/builder"
 )
 
-var ()
-
 func main() {
 
-	var appcatEnabled bool
-	var vshnEnabled bool
+	var appcatEnabled bool = false
+	// var vshnEnabled bool = false
 
 	if os.Getenv("APPCAT_ENABLED") == "1" {
 		appcatEnabled = true
 	}
-	if os.Getenv("VSHN_ENABLED") == "1" {
-		vshnEnabled = true
-	}
+	// if os.Getenv("VSHN_ENABLED") == "1" {
+	// 	vshnEnabled = true
+	// }
 	builder := builder.APIServer
-	builder.WithoutEtcd().
-		ExposeLoopbackAuthorizer().
-		ExposeLoopbackMasterClientConfig()
 
 	if appcatEnabled {
 		builder.WithResourceAndHandler(&appcatv1.AppCat{}, appcat.New())
+		fmt.Println("Enabling appcat")
 	}
 
-	if vshnEnabled {
-		builder.WithResourceAndHandler(&appcatv1.VSHNPostgresBackup{}, postgres.New())
-	}
+	// if vshnEnabled {
+	// 	builder.WithResourceAndHandler(&appcatv1.VSHNPostgresBackup{}, postgres.New())
+	// 	fmt.Println("Enabling vshnpostgresql")
+	// }
+	builder.WithoutEtcd().
+		ExposeLoopbackAuthorizer().
+		ExposeLoopbackMasterClientConfig()
 
 	cmd, err := builder.Build()
 	if err != nil {

@@ -3,7 +3,7 @@ dist/
 .github/release-notes.md
 
 # Binaries for programs and plugins
-appcat
+appcat-apiserver
 # But don't ignore the appcat APIS!
 !apis/appcat
 

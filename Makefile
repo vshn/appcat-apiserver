@@ -1,7 +1,7 @@
 
 # Image URL to use all building/pushing image targets
 IMG_TAG ?= latest
-GHCR_IMG ?= ghcr.io/vshn/appcat:$(IMG_TAG)
+GHCR_IMG ?= ghcr.io/vshn/appcat-apiserver:$(IMG_TAG)
 DOCKER_CMD ?= docker
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
@@ -23,11 +23,11 @@ DOCKER_IMAGE_GOOS = linux
 DOCKER_IMAGE_GOARCH = amd64
 
 PROJECT_ROOT_DIR = .
-PROJECT_NAME ?= appcat
+PROJECT_NAME ?= appcat-apiserver
 PROJECT_OWNER ?= vshn
 
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
-BIN_FILENAME ?= $(PROJECT_DIR)/appcat
+BIN_FILENAME ?= $(PROJECT_DIR)/appcat-apiserver
 
 ## Stackgres CRDs
 STACKGRES_VERSION ?= 1.4.3
@@ -64,18 +64,12 @@ help: ## Display this help.
 
 .PHONY: generate
 generate: export PATH := $(go_bin):$(PATH)
-generate: $(protoc_bin) generate-stackgres-crds ## Generate code with controller-gen and protobuf.
+generate: $(protoc_bin) ## Generate code with controller-gen and protobuf.
 	go version
 	rm -rf apis/generated
 	go run sigs.k8s.io/controller-tools/cmd/controller-gen paths=./apis/... object crd:crdVersions=v1,allowDangerousTypes=true output:artifacts:config=./apis/generated
-	go generate ./...
-	# Because yaml is such a fun and easy specification, we need to hack some things here.
-	# Depending on the yaml parser implementation the equal sign (=) has special meaning, or not...
-	# So we make it explicitly a string.
-	$(sed) -i ':a;N;$$!ba;s/- =\n/- "="\n/g' apis/generated/vshn.appcat.vshn.io_vshnpostgresqls.yaml
-	rm -rf crds && cp -r apis/generated crds
 	go run sigs.k8s.io/controller-tools/cmd/controller-gen rbac:roleName=appcat paths="{./apis/...,./pkg/apiserver/...}" output:artifacts:config=config/apiserver
-	go run sigs.k8s.io/controller-tools/cmd/controller-gen rbac:roleName=appcat-sli-exporter paths="{./pkg/sliexporter/...}" output:artifacts:config=config/sliexporter/rbac
+	go generate ./...
 	go run k8s.io/code-generator/cmd/go-to-protobuf \
 		--packages=github.com/vshn/appcat-apiserver/apis/appcat/v1 \
 		--output-base=./.work/tmp \
@@ -84,23 +78,6 @@ generate: $(protoc_bin) generate-stackgres-crds ## Generate code with controller
         --proto-import=./.work/kubernetes/vendor/ && \
     	mv ./.work/tmp/github.com/vshn/appcat-apiserver/apis/appcat/v1/generated.pb.go ./apis/appcat/v1/ && \
     	rm -rf ./.work/tmp
-
-.PHONY: generate-stackgres-crds
-generate-stackgres-crds:
-	curl ${STACKGRES_CRD_URL}/SGDbOps.yaml?inline=false -o apis/stackgres/v1/sgdbops_crd.yaml
-	yq -i e apis/stackgres/v1/sgdbops.yaml --expression ".components.schemas.SGDbOpsSpec=load(\"apis/stackgres/v1/sgdbops_crd.yaml\").spec.versions[0].schema.openAPIV3Schema.properties.spec"
-	yq -i e apis/stackgres/v1/sgdbops.yaml --expression ".components.schemas.SGDbOpsStatus=load(\"apis/stackgres/v1/sgdbops_crd.yaml\").spec.versions[0].schema.openAPIV3Schema.properties.status"
-	go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=v1 -generate=types -o apis/stackgres/v1/sgdbops.gen.go apis/stackgres/v1/sgdbops.yaml
-	perl -i -0pe 's/\*struct\s\{\n\s\sAdditionalProperties\smap\[string\]string\s`json:"-"`\n\s}/map\[string\]string/gms' apis/stackgres/v1/sgdbops.gen.go
-
-	curl ${STACKGRES_CRD_URL}/SGCluster.yaml?inline=false -o apis/stackgres/v1/sgcluster_crd.yaml
-	yq -i e apis/stackgres/v1/sgcluster.yaml --expression ".components.schemas.SGClusterSpec=load(\"apis/stackgres/v1/sgcluster_crd.yaml\").spec.versions[0].schema.openAPIV3Schema.properties.spec"
-	yq -i e apis/stackgres/v1/sgcluster.yaml --expression ".components.schemas.SGClusterStatus=load(\"apis/stackgres/v1/sgcluster_crd.yaml\").spec.versions[0].schema.openAPIV3Schema.properties.status"
-	go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=v1 -generate=types -o apis/stackgres/v1/sgcluster.gen.go apis/stackgres/v1/sgcluster.yaml
-	perl -i -0pe 's/\*struct\s\{\n\s\sAdditionalProperties\smap\[string\]string\s`json:"-"`\n\s}/map\[string\]string/gms' apis/stackgres/v1/sgcluster.gen.go
-
-	go run sigs.k8s.io/controller-tools/cmd/controller-gen object paths=./apis/stackgres/v1/...
-	rm apis/stackgres/v1/*_crd.yaml
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
@@ -137,7 +114,7 @@ docker-build:
 .PHONY: docker-build-branchtag
 docker-build-branchtag: docker-build ## Build docker image with current branch name
 	tag=$$(git rev-parse --abbrev-ref HEAD) && \
-	docker tag ${GHCR_IMG} ghcr.io/vshn/appcat:"$${tag////_}"
+	docker tag ${GHCR_IMG} ghcr.io/vshn/appcat-apiserver:"$${tag////_}"
 
 .PHONY: kind-load-branch-tag
 kind-load-branch-tag: ## load docker image with current branch tag into kind
@@ -147,49 +124,6 @@ kind-load-branch-tag: ## load docker image with current branch tag into kind
 .PHONY: docker-push
 docker-push: docker-build ## Push docker image with the manager.
 	docker push ${GHCR_IMG}
-
-# Generate webhook certificates.
-# This is only relevant when debugging.
-# Component-appcat installs a proper certificate for this.
-.PHONY: webhook-cert
-webhook_key = .work/webhook/tls.key
-webhook_cert = .work/webhook/tls.crt
-webhook-cert: $(webhook_cert) ## Generate webhook certificates for out-of-cluster debugging in an IDE
-
-$(webhook_key):
-	mkdir -p .work/webhook
-	ipsan="" && \
-	if [[ $(webhook_service_name) =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$$ ]]; then \
-		ipsan=", IP:$(webhook_service_name)"; \
-	fi; \
-	openssl req -x509 -newkey rsa:4096 -nodes -keyout $@ --noout -days 3650 -subj "/CN=$(webhook_service_name)" -addext "subjectAltName = DNS:$(webhook_service_name)$$ipsan"
-
-$(webhook_cert): $(webhook_key)
-	ipsan="" && \
-	if [[ $(webhook_service_name) =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$$ ]]; then \
-		ipsan=", IP:$(webhook_service_name)"; \
-	fi; \
-	openssl req -x509 -key $(webhook_key) -nodes -out $@ -days 3650 -subj "/CN=$(webhook_service_name)" -addext "subjectAltName = DNS:$(webhook_service_name)$$ipsan"
-
-
-.PHONY: webhook-debug
-webhook_service_name = host.docker.internal
-
-webhook-debug: $(webhook_cert) ## Creates certificates, patches the webhook registrations and applies everything to the given kube cluster
-webhook-debug:
-	kubectl -n syn-appcat scale deployment appcat-controller --replicas 0
-	cabundle=$$(cat .work/webhook/tls.crt | base64) && \
-	HOSTIP=$(webhook_service_name) && \
-	kubectl annotate validatingwebhookconfigurations.admissionregistration.k8s.io appcat-pg-validation cert-manager.io/inject-ca-from- && \
-	kubectl get validatingwebhookconfigurations.admissionregistration.k8s.io appcat-pg-validation -oyaml | \
-	yq e "del(.webhooks[0].clientConfig.service) | .webhooks[0].clientConfig.caBundle |= \"$$cabundle\" | .webhooks[0].clientConfig.url |= \"https://$$HOSTIP:9443/validate-vshn-appcat-vshn-io-v1-vshnpostgresql\"" - | \
-	kubectl apply -f - && \
-	kubectl annotate validatingwebhookconfigurations.admissionregistration.k8s.io appcat-redis-validation cert-manager.io/inject-ca-from- && \
-	kubectl annotate validatingwebhookconfigurations.admissionregistration.k8s.io appcat-pg-validation kubectl.kubernetes.io/last-applied-configuration- && \
-	kubectl get validatingwebhookconfigurations.admissionregistration.k8s.io appcat-redis-validation -oyaml | \
-	yq e "del(.webhooks[0].clientConfig.service) | .webhooks[0].clientConfig.caBundle |= \"$$cabundle\" | .webhooks[0].clientConfig.url |= \"https://$$HOSTIP:9443/validate-vshn-appcat-vshn-io-v1-vshnredis\"" - | \
-	kubectl apply -f - && \
-	kubectl annotate validatingwebhookconfigurations.admissionregistration.k8s.io appcat-redis-validation kubectl.kubernetes.io/last-applied-configuration-
 
 .PHONY: clean
 clean:

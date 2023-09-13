@@ -1,0 +1,22 @@
+= {page-component-name}
+
+[discrete]
+== Introduction
+
+The Application Catalog is a suite of applications offered by https://www.vshn.ch[VSHN].
+
+Here you’ll find all the technical documentation.
+Use the search field at the top of this page, navigate through topics with the tree on the left or see the links below.
+
+[discrete]
+== Documentation
+
+The documentation is inspired by the https://documentation.divio.com/[Divio's documentation structure]:
+
+Tutorials:: _Learning-oriented_: Simple lessons to learn about this project.
+
+How-to guides:: _Problem-oriented_: step-by-step guides to achieve a goal.
+
+Technical reference:: _Information-oriented_: explaining the inner ongoings.
+
+Explanation:: _Understanding-oriented_: puts this project in context.

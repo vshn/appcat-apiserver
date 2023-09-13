@@ -1,0 +1,21 @@
+* xref:index.adoc[Introduction]
+* https://github.com/vshn/appcat/releases[Changelog,window=_blank] 🔗
+
+.Tutorials
+//* xref:tutorials/example.adoc[Dev]
+
+.How To
+* xref:examples/vscode.adoc[]
+
+.Technical reference
+* xref:references/apiserver/env-variables.adoc[Env variables]
+
+.Explanation
+* xref:explanations/apiserver/boostrap.adoc[Boostrap]
+* xref:explanations/comp-functions/runtime.adoc[Runtime Library]
+* xref:explanations/comp-functions/vshn-postgres.adoc[VSHN Postgres Functions]
+* xref:explanations/slareports.adoc[]
+* xref:explanations/dev-notes.adoc[]
+* xref:explanations/comp-functions/debug.adoc[]
+* xref:explanations/comp-functions/redis-pvc-resize.adoc[]
+* xref:explanations/webhooks.adoc[]

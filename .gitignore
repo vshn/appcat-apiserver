@@ -1,0 +1,22 @@
+# Goreleaser
+dist/
+.github/release-notes.md
+
+# Binaries for programs and plugins
+appcat-apiserver
+# But don't ignore the appcat APIS!
+!apis/appcat
+
+# temp file, editor and IDE paraphernalia
+.idea
+.kind
+.work
+.cache
+.public
+
+# debug
+apiserver.local.config
+__debug_bin*
+
+# Kubebuilder
+/apis/generated/

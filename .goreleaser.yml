@@ -1,5 +1,5 @@
 builds:
-  - binary: appcat
+  - binary: appcat-apiserver
     env:
       - CGO_ENABLED=0 # this is needed otherwise the Docker image build is faulty
     goarch:

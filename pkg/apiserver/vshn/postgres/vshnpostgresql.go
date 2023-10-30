@@ -27,6 +27,11 @@ func (k *kubeXVSHNPostgresqlProvider) ListXVSHNPostgreSQL(ctx context.Context, n
 	err := k.Client.List(ctx, list)
 	cleanedList := make([]vshnv1.XVSHNPostgreSQL, 0)
 	for _, p := range list.Items {
+		// In some cases instance namespaces is missing and as a consequence all backups from the whole cluster
+		// are being exposed creating a security issue - check APPCAT-563.
+		if p.Status.InstanceNamespace == "" {
+			continue
+		}
 		if p.Labels[claimNamespaceLabel] == "" || p.Labels[claimNameLabel] == "" {
 			continue
 		}

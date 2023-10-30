@@ -24,5 +24,16 @@ func (c *concreteRedisProvider) ListVSHNRedis(ctx context.Context, namespace str
 		return nil, err
 	}
 
+	cleanedList := make([]vshnv1.VSHNRedis, 0)
+	for _, p := range instances.Items {
+		//
+		// In some cases instance namespaces is missing and as a consequence all backups from the whole cluster
+		// are being exposed creating a security issue - check APPCAT-563.
+		if p.Status.InstanceNamespace != "" {
+			cleanedList = append(cleanedList, p)
+		}
+	}
+	instances.Items = cleanedList
+
 	return instances, nil
 }

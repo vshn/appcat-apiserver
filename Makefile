@@ -67,15 +67,16 @@ generate: export PATH := $(go_bin):$(PATH)
 generate: $(protoc_bin) ## Generate code with controller-gen and protobuf.
 	go version
 	rm -rf apis/generated
-	go run sigs.k8s.io/controller-tools/cmd/controller-gen paths=./apis/... object crd:crdVersions=v1,allowDangerousTypes=true output:artifacts:config=./apis/generated
-	go run sigs.k8s.io/controller-tools/cmd/controller-gen rbac:roleName=appcat paths="{./apis/...,./pkg/apiserver/...}" output:artifacts:config=config/apiserver
+	go run sigs.k8s.io/controller-tools/cmd/controller-gen@v0.15.0 paths=./apis/... object crd:crdVersions=v1,allowDangerousTypes=true output:artifacts:config=./apis/generated
+	go run sigs.k8s.io/controller-tools/cmd/controller-gen@v0.15.0 rbac:roleName=appcat paths="{./apis/...,./pkg/apiserver/...}" output:artifacts:config=config/apiserver
 	go generate ./...
-	go run k8s.io/code-generator/cmd/go-to-protobuf \
+	go run k8s.io/code-generator/cmd/go-to-protobuf@v0.26.3 \
 		--packages=github.com/vshn/appcat-apiserver/apis/appcat/v1 \
 		--output-base=./.work/tmp \
 		--go-header-file=./pkg/apiserver/hack/boilerplate.txt  \
         --apimachinery-packages='-k8s.io/apimachinery/pkg/util/intstr,-k8s.io/apimachinery/pkg/api/resource,-k8s.io/apimachinery/pkg/runtime/schema,-k8s.io/apimachinery/pkg/runtime,-k8s.io/apimachinery/pkg/apis/meta/v1,-k8s.io/apimachinery/pkg/apis/meta/v1beta1,-k8s.io/api/core/v1,-k8s.io/api/rbac/v1' \
-        --proto-import=./.work/kubernetes/vendor/ && \
+        --proto-import=./.work/kubernetes/staging/src/ \
+		--proto-import=./.work/kubernetes/vendor \
     	mv ./.work/tmp/github.com/vshn/appcat-apiserver/apis/appcat/v1/generated.pb.go ./apis/appcat/v1/ && \
     	rm -rf ./.work/tmp
 

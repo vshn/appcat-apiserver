@@ -1,6 +1,6 @@
 module github.com/vshn/appcat-apiserver
 
-go 1.20
+go 1.22.3
 
 replace github.com/deepmap/oapi-codegen => github.com/sljeff/oapi-codegen v1.5.1-0.20211207091501-bc20f55d338a
 

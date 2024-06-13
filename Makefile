@@ -120,7 +120,7 @@ docker-build-branchtag: docker-build ## Build docker image with current branch n
 .PHONY: kind-load-branch-tag
 kind-load-branch-tag: ## load docker image with current branch tag into kind
 	tag=$$(git rev-parse --abbrev-ref HEAD) && \
-	kind load docker-image --name kindev ghcr.io/vshn/appcat:"$${tag////_}"
+	kind load docker-image --name kindev ghcr.io/vshn/appcat-apiserver:"$${tag////_}"
 
 .PHONY: docker-push
 docker-push: docker-build ## Push docker image with the manager.

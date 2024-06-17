@@ -23,6 +23,8 @@ var (
 	Timing = "timing"
 	// End holds field path name end
 	End = "end"
+	// Start holds field path name start
+	Start = "start"
 )
 
 // VSHNPostgreSQLName represents the name of a VSHNPostgreSQL

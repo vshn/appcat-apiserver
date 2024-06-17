@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/viper"
 	appcatv1 "github.com/vshn/appcat-apiserver/apis/appcat/v1"
 	"github.com/vshn/appcat-apiserver/pkg/apiserver/appcat"
+	vshnmariadb "github.com/vshn/appcat-apiserver/pkg/apiserver/vshn/mariadb"
 	vshnpostgres "github.com/vshn/appcat-apiserver/pkg/apiserver/vshn/postgres"
 	vshnredis "github.com/vshn/appcat-apiserver/pkg/apiserver/vshn/redis"
 	"sigs.k8s.io/apiserver-runtime/pkg/builder"
@@ -21,7 +22,7 @@ func newAPIServerCMD() *cobra.Command {
 
 	viper.AutomaticEnv()
 
-	var appcatEnabled, vshnPGBackupsEnabled, vshnRedisBackupsEnabled bool
+	var appcatEnabled, vshnPGBackupsEnabled, vshnRedisBackupsEnabled, vshnMariaDBBackupEnabled bool
 
 	if len(os.Args) < 2 {
 		return &cobra.Command{}
@@ -31,7 +32,8 @@ func newAPIServerCMD() *cobra.Command {
 		appcatEnabled = viper.GetBool("APPCAT_HANDLER_ENABLED")
 		vshnPGBackupsEnabled = viper.GetBool("VSHN_POSTGRES_BACKUP_HANDLER_ENABLED")
 		vshnRedisBackupsEnabled = viper.GetBool("VSHN_REDIS_BACKUP_HANDLER_ENABLED")
-		if !appcatEnabled && !vshnPGBackupsEnabled && !vshnRedisBackupsEnabled {
+		vshnMariaDBBackupEnabled = viper.GetBool("VSHN_MARIADB_BACKUP_HANDLER_ENABLED")
+		if !appcatEnabled && !vshnPGBackupsEnabled && !vshnRedisBackupsEnabled && !vshnMariaDBBackupEnabled {
 			log.Fatal("Handlers are not enabled, please set at least one of APPCAT_HANDLER_ENABLED | VSHN_POSTGRES_BACKUP_HANDLER_ENABLED | VSHN_REDIS_BACKUP_HANDLER_ENABLED env variables to True")
 		}
 	}
@@ -48,6 +50,10 @@ func newAPIServerCMD() *cobra.Command {
 
 	if vshnRedisBackupsEnabled {
 		b.WithResourceAndHandler(&appcatv1.VSHNRedisBackup{}, vshnredis.New())
+	}
+
+	if vshnMariaDBBackupEnabled {
+		b.WithResourceAndHandler(&appcatv1.VSHNMariaDBBackup{}, vshnmariadb.New())
 	}
 
 	b.WithoutEtcd().

@@ -1,4 +1,4 @@
-package redis
+package mariadb
 
 import (
 	"context"
@@ -14,23 +14,23 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
-var _ rest.TableConvertor = &vshnRedisBackupStorage{}
+var _ rest.TableConvertor = &vshnMariaDBBackupStorage{}
 
-func (v *vshnRedisBackupStorage) ConvertToTable(_ context.Context, obj runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+func (v *vshnMariaDBBackupStorage) ConvertToTable(_ context.Context, obj runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 
 	table := &metav1.Table{}
 
-	backups := []appcatv1.VSHNRedisBackup{}
+	backups := []appcatv1.VSHNMariaDBBackup{}
 	if meta.IsListType(obj) {
-		backupList, ok := obj.(*appcatv1.VSHNRedisBackupList)
+		backupList, ok := obj.(*appcatv1.VSHNMariaDBBackupList)
 		if !ok {
-			return nil, fmt.Errorf("not a vshn redis backup: %#v", obj)
+			return nil, fmt.Errorf("not a vshn mariadb backup: %#v", obj)
 		}
 		backups = backupList.Items
 	} else {
-		backup, ok := obj.(*appcatv1.VSHNRedisBackup)
+		backup, ok := obj.(*appcatv1.VSHNMariaDBBackup)
 		if !ok {
-			return nil, fmt.Errorf("not a vshn redis backup: %#v", obj)
+			return nil, fmt.Errorf("not a vshn mariadb backup: %#v", obj)
 		}
 		backups = append(backups, *backup)
 	}
@@ -47,7 +47,7 @@ func (v *vshnRedisBackupStorage) ConvertToTable(_ context.Context, obj runtime.O
 }
 
 // ToDo Once k8up exposes start time, update the code here
-func backupToTableRow(backup *appcatv1.VSHNRedisBackup) metav1.TableRow {
+func backupToTableRow(backup *appcatv1.VSHNMariaDBBackup) metav1.TableRow {
 	return apiserver.GetBackupTable(
 		trimStringLength(backup.Status.ID),
 		backup.Status.Instance,

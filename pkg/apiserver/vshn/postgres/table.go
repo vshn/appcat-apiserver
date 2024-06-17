@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"github.com/vshn/appcat-apiserver/pkg/apiserver"
 	"time"
 
 	v1 "github.com/vshn/appcat-apiserver/apis/appcat/v1"
@@ -40,28 +41,20 @@ func (v *vshnPostgresBackupStorage) ConvertToTable(_ context.Context, obj runtim
 	}
 
 	if opt, ok := tableOptions.(*metav1.TableOptions); !ok || !opt.NoHeaders {
-		desc := metav1.ObjectMeta{}.SwaggerDoc()
-		table.ColumnDefinitions = []metav1.TableColumnDefinition{
-			{Name: "Backup Name", Type: "string", Format: "name", Description: desc["name"]},
-			{Name: "Database Instance", Type: "string", Description: "The database instance"},
-			{Name: "Finished On", Type: "string", Description: "The data is available up to this time"},
-			{Name: "Status", Type: "string", Description: "The state of this backup"},
-			{Name: "Age", Type: "date", Description: desc["creationTimestamp"]},
-		}
+		table.ColumnDefinitions = apiserver.GetBackupColumnDefinition()
 	}
 	return &table, nil
 }
 
 func backupToTableRow(backup *v1.VSHNPostgresBackup) metav1.TableRow {
-	return metav1.TableRow{
-		Cells: []interface{}{
-			backup.GetName(),
-			backup.Status.DatabaseInstance,
-			getEndTime(backup.Status.Process),
-			getProcessStatus(backup.Status.Process),
-			duration.HumanDuration(time.Since(backup.GetCreationTimestamp().Time))},
-		Object: runtime.RawExtension{Object: backup},
-	}
+	return apiserver.GetBackupTable(
+		backup.GetName(),
+		backup.Status.DatabaseInstance,
+		getProcessStatus(backup.Status.Process),
+		duration.HumanDuration(time.Since(backup.GetCreationTimestamp().Time)),
+		getStartTime(backup.Status.Process),
+		getEndTime(backup.Status.Process),
+		backup)
 }
 
 func getEndTime(process *runtime.RawExtension) string {
@@ -69,6 +62,17 @@ func getEndTime(process *runtime.RawExtension) string {
 		if v, err := runtime.DefaultUnstructuredConverter.ToUnstructured(process.Object); err == nil {
 			if endTime, exists, _ := unstructured.NestedString(v, v1.Timing, v1.End); exists {
 				return endTime
+			}
+		}
+	}
+	return ""
+}
+
+func getStartTime(process *runtime.RawExtension) string {
+	if process != nil && process.Object != nil {
+		if v, err := runtime.DefaultUnstructuredConverter.ToUnstructured(process.Object); err == nil {
+			if startTime, exists, _ := unstructured.NestedString(v, v1.Timing, v1.Start); exists {
+				return startTime
 			}
 		}
 	}

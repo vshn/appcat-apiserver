@@ -67,15 +67,16 @@ generate: export PATH := $(go_bin):$(PATH)
 generate: $(protoc_bin) ## Generate code with controller-gen and protobuf.
 	go version
 	rm -rf apis/generated
-	go run sigs.k8s.io/controller-tools/cmd/controller-gen paths=./apis/... object crd:crdVersions=v1,allowDangerousTypes=true output:artifacts:config=./apis/generated
-	go run sigs.k8s.io/controller-tools/cmd/controller-gen rbac:roleName=appcat paths="{./apis/...,./pkg/apiserver/...}" output:artifacts:config=config/apiserver
+	go run sigs.k8s.io/controller-tools/cmd/controller-gen@v0.15.0 paths=./apis/... object crd:crdVersions=v1,allowDangerousTypes=true output:artifacts:config=./apis/generated
+	go run sigs.k8s.io/controller-tools/cmd/controller-gen@v0.15.0 rbac:roleName=appcat paths="{./apis/...,./pkg/apiserver/...}" output:artifacts:config=config/apiserver
 	go generate ./...
-	go run k8s.io/code-generator/cmd/go-to-protobuf \
+	go run k8s.io/code-generator/cmd/go-to-protobuf@v0.26.3 \
 		--packages=github.com/vshn/appcat-apiserver/apis/appcat/v1 \
 		--output-base=./.work/tmp \
 		--go-header-file=./pkg/apiserver/hack/boilerplate.txt  \
         --apimachinery-packages='-k8s.io/apimachinery/pkg/util/intstr,-k8s.io/apimachinery/pkg/api/resource,-k8s.io/apimachinery/pkg/runtime/schema,-k8s.io/apimachinery/pkg/runtime,-k8s.io/apimachinery/pkg/apis/meta/v1,-k8s.io/apimachinery/pkg/apis/meta/v1beta1,-k8s.io/api/core/v1,-k8s.io/api/rbac/v1' \
-        --proto-import=./.work/kubernetes/vendor/ && \
+        --proto-import=./.work/kubernetes/staging/src/ \
+		--proto-import=./.work/kubernetes/vendor \
     	mv ./.work/tmp/github.com/vshn/appcat-apiserver/apis/appcat/v1/generated.pb.go ./apis/appcat/v1/ && \
     	rm -rf ./.work/tmp
 
@@ -119,7 +120,7 @@ docker-build-branchtag: docker-build ## Build docker image with current branch n
 .PHONY: kind-load-branch-tag
 kind-load-branch-tag: ## load docker image with current branch tag into kind
 	tag=$$(git rev-parse --abbrev-ref HEAD) && \
-	kind load docker-image --name kindev ghcr.io/vshn/appcat:"$${tag////_}"
+	kind load docker-image --name kindev ghcr.io/vshn/appcat-apiserver:"$${tag////_}"
 
 .PHONY: docker-push
 docker-push: docker-build ## Push docker image with the manager.

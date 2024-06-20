@@ -2,6 +2,8 @@ package apiserver
 
 import (
 	"errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -66,4 +68,23 @@ func (m *MultiWatcher) ResultChan() <-chan watch.Event {
 		}()
 	}
 	return m.eventChan
+}
+
+func GetBackupTable(id, instance, status, age, started, finished string, backup runtime.Object) metav1.TableRow {
+	return metav1.TableRow{
+		Cells:  []interface{}{id, instance, started, finished, status, age}, // Snapshots are created only when the backup successfully finished
+		Object: runtime.RawExtension{Object: backup},
+	}
+}
+
+func GetBackupColumnDefinition() []metav1.TableColumnDefinition {
+	desc := metav1.ObjectMeta{}.SwaggerDoc()
+	return []metav1.TableColumnDefinition{
+		{Name: "Backup ID", Type: "string", Format: "name", Description: desc["name"]},
+		{Name: "Database Instance", Type: "string", Description: "The database instance"},
+		{Name: "Started", Type: "string", Description: "The backup start time"},
+		{Name: "Finished", Type: "string", Description: "The data is available up to this time"},
+		{Name: "Status", Type: "string", Description: "The state of this backup"},
+		{Name: "Age", Type: "date", Description: desc["creationTimestamp"]},
+	}
 }

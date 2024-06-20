@@ -31,6 +31,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&VSHNPostgresBackupList{},
 		&VSHNRedisBackup{},
 		&VSHNRedisBackupList{},
+		&VSHNMariaDBBackup{},
+		&VSHNMariaDBBackupList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

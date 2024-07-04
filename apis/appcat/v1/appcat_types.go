@@ -37,6 +37,7 @@ var Resource = "appcats"
 // +kubebuilder:object:root=true
 
 // AppCat defines the main object for this API Server
+// +k8s:openapi-gen=true
 type AppCat struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -49,6 +50,7 @@ type AppCat struct {
 // +kubebuilder:object:root=true
 
 // AppCatList defines a list of AppCat
+// +k8s:openapi-gen=true
 type AppCatList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -61,6 +63,7 @@ type Details map[string]string
 
 // VSHNPlan represents a plan for a VSHN service.
 // It ignores the scheduling labels and other internal fields.
+// +k8s:openapi-gen=true
 type VSHNPlan struct {
 	Note string `json:"note,omitempty"`
 	// JSize is called JSize because protobuf creates a method Size()
@@ -70,6 +73,7 @@ type VSHNPlan struct {
 // VSHNSize describes the aspects of the actual plan.
 // This needs to be a separate struct as the protobuf generator can't handle
 // embedded struct apparently.
+// +k8s:openapi-gen=true
 type VSHNSize struct {
 	CPU    string `json:"cpu,omitempty"`
 	Disk   string `json:"disk,omitempty"`
@@ -118,6 +122,7 @@ func (in *AppCatList) GetListMeta() *metav1.ListMeta {
 }
 
 // AppCatStatus defines the observed state of AppCat
+// +k8s:openapi-gen=true
 type AppCatStatus struct {
 	// CompositionName is the name of the composition
 	CompositionName string `json:"compositionName,omitempty"`

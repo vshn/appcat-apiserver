@@ -12,7 +12,7 @@ var _ resource.Object = &VSHNRedisBackup{}
 var _ resource.ObjectList = &VSHNRedisBackupList{}
 
 // +kubebuilder:object:root=true
-
+// +k8s:openapi-gen=true
 type VSHNRedisBackup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -20,6 +20,7 @@ type VSHNRedisBackup struct {
 	Status VSHNRedisBackupStatus `json:"status,omitempty"`
 }
 
+// +k8s:openapi-gen=true
 type VSHNRedisBackupStatus struct {
 	ID       string      `json:"id,omitempty"`
 	Date     metav1.Time `json:"date,omitempty"`
@@ -27,7 +28,7 @@ type VSHNRedisBackupStatus struct {
 }
 
 // +kubebuilder:object:root=true
-
+// +k8s:openapi-gen=true
 type VSHNRedisBackupList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

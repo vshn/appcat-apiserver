@@ -3,6 +3,9 @@ package redis
 import (
 	k8upv1 "github.com/k8up-io/k8up/v2/api/v1"
 	appcatv1 "github.com/vshn/appcat-apiserver/apis/appcat/v1"
+	vshnv1 "github.com/vshn/appcat-apiserver/apis/vshn/v1"
+	"github.com/vshn/appcat-apiserver/pkg/apiserver"
+	"github.com/vshn/appcat-apiserver/pkg/apiserver/noop"
 	"github.com/vshn/appcat-apiserver/pkg/apiserver/vshn/k8up"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,6 +22,7 @@ var _ rest.Storage = &vshnRedisBackupStorage{}
 type vshnRedisBackupStorage struct {
 	snapshothandler k8up.Snapshothandler
 	vshnRedis       vshnRedisProvider
+	noop.Noop
 }
 
 // New returns a new resthandler for Redis backups.
@@ -31,17 +35,29 @@ func New() restbuilder.ResourceHandlerProvider {
 
 		_ = k8upv1.AddToScheme(c.Scheme())
 
+		noopImplementation := noop.New(s, &appcatv1.VSHNRedisBackup{}, &appcatv1.VSHNRedisBackupList{})
+
+		if !apiserver.IsTypeAvailable(vshnv1.GroupVersion.String(), "XVSHNRedis") {
+			return noopImplementation, nil
+		}
+
 		return &vshnRedisBackupStorage{
 			snapshothandler: k8up.New(c),
 			vshnRedis: &concreteRedisProvider{
 				client: c,
 			},
+			Noop: *noopImplementation,
 		}, nil
 	}
 }
 
 func (v vshnRedisBackupStorage) New() runtime.Object {
 	return &appcatv1.VSHNRedisBackup{}
+}
+
+// GetSingularName is needed for the OpenAPI Registartion
+func (in *vshnRedisBackupStorage) GetSingularName() string {
+	return "vshnredisbackup"
 }
 
 func (v vshnRedisBackupStorage) Destroy() {}

@@ -36,6 +36,7 @@ type VSHNPostgreSQLNamespace string
 // +kubebuilder:object:root=true
 
 // VSHNPostgresBackup defines VSHN managed PostgreSQL backups
+// +k8s:openapi-gen=true
 type VSHNPostgresBackup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -45,6 +46,7 @@ type VSHNPostgresBackup struct {
 }
 
 // VSHNPostgresBackupStatus defines the desired state of VSHNPostgresBackup
+// +k8s:openapi-gen=true
 type VSHNPostgresBackupStatus struct {
 	// Process holds status information of the backup process
 	Process *runtime.RawExtension `json:"process,omitempty"`
@@ -92,6 +94,7 @@ func (in *VSHNPostgresBackup) IsStorageVersion() bool {
 // +kubebuilder:object:root=true
 
 // VSHNPostgresBackupList defines a list of VSHNPostgresBackup
+// +k8s:openapi-gen=true
 type VSHNPostgresBackupList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

@@ -1,8 +1,10 @@
 package postgres
 
 import (
-	v1 "github.com/vshn/appcat-apiserver/apis/appcat/v1"
+	appcatv1 "github.com/vshn/appcat-apiserver/apis/appcat/v1"
 	vshnv1 "github.com/vshn/appcat-apiserver/apis/vshn/v1"
+	"github.com/vshn/appcat-apiserver/pkg/apiserver"
+	"github.com/vshn/appcat-apiserver/pkg/apiserver/noop"
 	"k8s.io/apimachinery/pkg/runtime"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -25,6 +27,12 @@ func New() restbuilder.ResourceHandlerProvider {
 			return nil, err
 		}
 
+		noopImplementation := noop.New(s, &appcatv1.VSHNPostgresBackup{}, &appcatv1.VSHNPostgresBackupList{})
+
+		if !apiserver.IsTypeAvailable(vshnv1.GroupVersion.String(), "XVSHNPostgreSQL") {
+			return noopImplementation, nil
+		}
+
 		dc, err := dynamic.NewForConfig(loopback.GetLoopbackMasterClientConfig())
 		if err != nil {
 			return nil, err
@@ -36,6 +44,7 @@ func New() restbuilder.ResourceHandlerProvider {
 			vshnpostgresql: &kubeXVSHNPostgresqlProvider{
 				Client: c,
 			},
+			Noop: *noopImplementation,
 		}, nil
 	}
 }
@@ -43,10 +52,16 @@ func New() restbuilder.ResourceHandlerProvider {
 type vshnPostgresBackupStorage struct {
 	sgbackups      sgbackupProvider
 	vshnpostgresql vshnPostgresqlProvider
+	noop.Noop
+}
+
+// GetSingularName is needed for the OpenAPI Registartion
+func (in *vshnPostgresBackupStorage) GetSingularName() string {
+	return "vshnpostgresbackup"
 }
 
 func (v vshnPostgresBackupStorage) New() runtime.Object {
-	return &v1.VSHNPostgresBackup{}
+	return &appcatv1.VSHNPostgresBackup{}
 }
 
 func (v vshnPostgresBackupStorage) Destroy() {}

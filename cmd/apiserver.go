@@ -2,63 +2,36 @@ package cmd
 
 import (
 	"log"
-	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	appcatv1 "github.com/vshn/appcat-apiserver/apis/appcat/v1"
 	"github.com/vshn/appcat-apiserver/pkg/apiserver/appcat"
 	vshnmariadb "github.com/vshn/appcat-apiserver/pkg/apiserver/vshn/mariadb"
 	vshnpostgres "github.com/vshn/appcat-apiserver/pkg/apiserver/vshn/postgres"
 	vshnredis "github.com/vshn/appcat-apiserver/pkg/apiserver/vshn/redis"
+	appcatopenapi "github.com/vshn/appcat-apiserver/pkg/openapi"
 	"sigs.k8s.io/apiserver-runtime/pkg/builder"
 )
-
-var apiServerCMDStr = "apiserver"
 
 var APIServerCMD = newAPIServerCMD()
 
 func newAPIServerCMD() *cobra.Command {
 
-	viper.AutomaticEnv()
-
-	var appcatEnabled, vshnPGBackupsEnabled, vshnRedisBackupsEnabled, vshnMariaDBBackupEnabled bool
-
-	if len(os.Args) < 2 {
-		return &cobra.Command{}
-	}
-
-	if os.Args[1] == apiServerCMDStr {
-		appcatEnabled = viper.GetBool("APPCAT_HANDLER_ENABLED")
-		vshnPGBackupsEnabled = viper.GetBool("VSHN_POSTGRES_BACKUP_HANDLER_ENABLED")
-		vshnRedisBackupsEnabled = viper.GetBool("VSHN_REDIS_BACKUP_HANDLER_ENABLED")
-		vshnMariaDBBackupEnabled = viper.GetBool("VSHN_MARIADB_BACKUP_HANDLER_ENABLED")
-		if !appcatEnabled && !vshnPGBackupsEnabled && !vshnRedisBackupsEnabled && !vshnMariaDBBackupEnabled {
-			log.Fatal("Handlers are not enabled, please set at least one of APPCAT_HANDLER_ENABLED | VSHN_POSTGRES_BACKUP_HANDLER_ENABLED | VSHN_REDIS_BACKUP_HANDLER_ENABLED env variables to True")
-		}
-	}
-
 	b := builder.APIServer
 
-	if appcatEnabled {
-		b.WithResourceAndHandler(&appcatv1.AppCat{}, appcat.New())
-	}
+	b.WithResourceAndHandler(&appcatv1.AppCat{}, appcat.New())
 
-	if vshnPGBackupsEnabled {
-		b.WithResourceAndHandler(&appcatv1.VSHNPostgresBackup{}, vshnpostgres.New())
-	}
+	b.WithResourceAndHandler(&appcatv1.VSHNPostgresBackup{}, vshnpostgres.New())
 
-	if vshnRedisBackupsEnabled {
-		b.WithResourceAndHandler(&appcatv1.VSHNRedisBackup{}, vshnredis.New())
-	}
+	b.WithResourceAndHandler(&appcatv1.VSHNRedisBackup{}, vshnredis.New())
 
-	if vshnMariaDBBackupEnabled {
-		b.WithResourceAndHandler(&appcatv1.VSHNMariaDBBackup{}, vshnmariadb.New())
-	}
+	b.WithResourceAndHandler(&appcatv1.VSHNMariaDBBackup{}, vshnmariadb.New())
 
 	b.WithoutEtcd().
 		ExposeLoopbackAuthorizer().
 		ExposeLoopbackMasterClientConfig()
+
+	b.WithOpenAPIDefinitions("Wardle", "0.1", appcatopenapi.GetOpenAPIDefinitions)
 
 	cmd, err := b.Build()
 	cmd.Use = "apiserver"

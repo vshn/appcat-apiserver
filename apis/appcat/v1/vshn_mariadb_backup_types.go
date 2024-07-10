@@ -12,7 +12,7 @@ var _ resource.Object = &VSHNMariaDBBackup{}
 var _ resource.ObjectList = &VSHNMariaDBBackupList{}
 
 // +kubebuilder:object:root=true
-
+// +k8s:openapi-gen=true
 type VSHNMariaDBBackup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -20,6 +20,7 @@ type VSHNMariaDBBackup struct {
 	Status VSHNMariaDBBackupStatus `json:"status,omitempty"`
 }
 
+// +k8s:openapi-gen=true
 type VSHNMariaDBBackupStatus struct {
 	ID       string      `json:"id,omitempty"`
 	Date     metav1.Time `json:"date,omitempty"`
@@ -27,7 +28,7 @@ type VSHNMariaDBBackupStatus struct {
 }
 
 // +kubebuilder:object:root=true
-
+// +k8s:openapi-gen=true
 type VSHNMariaDBBackupList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

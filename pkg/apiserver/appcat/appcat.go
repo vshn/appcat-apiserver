@@ -2,7 +2,9 @@ package appcat
 
 import (
 	crossplane "github.com/crossplane/crossplane/apis/apiextensions/v1"
-	v1 "github.com/vshn/appcat-apiserver/apis/appcat/v1"
+	appcatv1 "github.com/vshn/appcat-apiserver/apis/appcat/v1"
+	"github.com/vshn/appcat-apiserver/pkg/apiserver"
+	"github.com/vshn/appcat-apiserver/pkg/apiserver/noop"
 	"k8s.io/apimachinery/pkg/runtime"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -23,7 +25,7 @@ func New() restbuilder.ResourceHandlerProvider {
 		if err != nil {
 			return nil, err
 		}
-		err = v1.AddToScheme(c.Scheme())
+		err = appcatv1.AddToScheme(c.Scheme())
 		if err != nil {
 			return nil, err
 		}
@@ -31,20 +33,34 @@ func New() restbuilder.ResourceHandlerProvider {
 		if err != nil {
 			return nil, err
 		}
+
+		noopImplementation := noop.New(s, &appcatv1.AppCat{}, &appcatv1.AppCatList{})
+
+		if !apiserver.IsTypeAvailable(crossplane.SchemeGroupVersion.String(), "Composition") {
+			return noopImplementation, nil
+		}
+
 		return &appcatStorage{
 			compositions: &kubeCompositionProvider{
 				Client: c,
 			},
+			Noop: *noopImplementation,
 		}, nil
 	}
 }
 
 type appcatStorage struct {
 	compositions compositionProvider
+	noop.Noop
+}
+
+// GetSingularName is needed for the OpenAPI Registartion
+func (in *appcatStorage) GetSingularName() string {
+	return "appcat"
 }
 
 func (s *appcatStorage) New() runtime.Object {
-	return &v1.AppCat{}
+	return &appcatv1.AppCat{}
 }
 
 func (s *appcatStorage) Destroy() {}

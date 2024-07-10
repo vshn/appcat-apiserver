@@ -4,6 +4,8 @@
 // +groupName=api.appcat.vshn.io
 package v1
 
+//go:generate go run k8s.io/kube-openapi/cmd/openapi-gen . k8s.io/apimachinery/pkg/api/resource k8s.io/apimachinery/pkg/apis/meta/v1 k8s.io/apimachinery/pkg/runtime k8s.io/apimachinery/pkg/version --output-dir ../../../pkg/openapi --output-pkg openapi
+
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
